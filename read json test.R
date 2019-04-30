@@ -116,7 +116,7 @@ noNdsTotal<- subset(dat2, rowSums(dat2[,allNDScolumns])==0)
 dat2[, 15][is.na(dat2[,15])]<-0
 dat2[,allNDScolumns][is.na(dat2[,allNDScolumns])]<-0
 
- NDSequlaSum<- subset(dat2, dat2[,15]== rowSums(dat2[,allNDScolumns])) 
+ NDSequalSum<- subset(dat2, dat2[,15]== rowSums(dat2[,allNDScolumns])) 
 
 
 # количество чеков по TaxationType|, где не указан НДС вообще нигде

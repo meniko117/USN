@@ -39,6 +39,6 @@ checksGroup<-checks %>%
 tokenCheckd<-subset(checksGroup, checksGroup[,3]> 1)
 
 
-df5000<-subset(NDSequlaSum, NDSequlaSum[ ,15] == 5000)
+df5000<-subset(NDSequalSum, NDSequalSum[ ,15] == 5000)
 
 
