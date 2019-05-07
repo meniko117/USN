@@ -1,38 +1,41 @@
 library(sqldf)
 
-# sqldf не работает с колонками, в которых содержится тип List
-# определить тип колонок
+# sqldf Г­ГҐ Г°Г ГЎГ®ГІГ ГҐГІ Г± ГЄГ®Г«Г®Г­ГЄГ Г¬ГЁ, Гў ГЄГ®ГІГ®Г°Г»Гµ Г±Г®Г¤ГҐГ°Г¦ГЁГІГ±Гї ГІГЁГЇ List
+# Г®ГЇГ°ГҐГ¤ГҐГ«ГЁГІГј ГІГЁГЇ ГЄГ®Г«Г®Г­Г®ГЄ
 coltypes<-dat2[1,] %>% 
   summarise_all(typeof)
 
-# преобразовать ряды в колонки
+# ГЇГ°ГҐГ®ГЎГ°Г Г§Г®ГўГ ГІГј Г°ГїГ¤Г» Гў ГЄГ®Г«Г®Г­ГЄГЁ
 coltypes<-tidyr::gather(coltypes)
 
 
-# оставляем в таблице только колонки без переменных List
+# Г®Г±ГІГ ГўГ«ГїГҐГ¬ Гў ГІГ ГЎГ«ГЁГ¶ГҐ ГІГ®Г«ГјГЄГ® ГЄГ®Г«Г®Г­ГЄГЁ ГЎГҐГ§ ГЇГҐГ°ГҐГ¬ГҐГ­Г­Г»Гµ List
 datSQL<- dat2[, c(1:23, 25:27, 29:36, 39:42, 46:54, 56:75)]
 
 
-# убираем "content" из названий колонок, т.к. sqldf не идентифицирует эти названия
+# ГіГЎГЁГ°Г ГҐГ¬ "content" ГЁГ§ Г­Г Г§ГўГ Г­ГЁГ© ГЄГ®Г«Г®Г­Г®ГЄ, ГІ.ГЄ. sqldf Г­ГҐ ГЁГ¤ГҐГ­ГІГЁГґГЁГ¶ГЁГ°ГіГҐГІ ГЅГІГЁ Г­Г Г§ГўГ Г­ГЁГї
 library(stringr)
 
 colnames(datSQL)<-colnames(datSQL) %>% str_replace("content.", "")
 
-#убираем дубликаты в названиях
+#ГіГЎГЁГ°Г ГҐГ¬ Г¤ГіГЎГ«ГЁГЄГ ГІГ» Гў Г­Г Г§ГўГ Г­ГЁГїГµ
 colnames(datSQL)[27]<-"kktRegId2"
 colnames(datSQL)[43]<-"protocolVersion2" 
 
 
-# ПИШЕМ SQL запросы
+# ГЏГ€ГГ…ГЊ SQL Г§Г ГЇГ°Г®Г±Г»
 
-# группируем чеки по ofd
+# ГЈГ°ГіГЇГЇГЁГ°ГіГҐГ¬ Г·ГҐГЄГЁ ГЇГ® ofd
 View(sqldf("SELECT ofdId, COUNT (ofdId) FROM datSQL GROUP BY ofdId " ))
 
-# cумма чека равна сумме некторых полей с НДС
+# cГіГ¬Г¬Г  Г·ГҐГЄГ  Г°Г ГўГ­Г  Г±ГіГ¬Г¬ГҐ Г­ГҐГЄГІГ®Г°Г»Гµ ГЇГ®Г«ГҐГ© Г± ГЌГ„Г‘
 View(sqldf("SELECT * FROM datSQL WHERE totalSum = nds0 + nds18+ ndsNo " ))
 
-# больше всего пробитых чеков
+# ГЎГ®Г«ГјГёГҐ ГўГ±ГҐГЈГ® ГЇГ°Г®ГЎГЁГІГ»Гµ Г·ГҐГЄГ®Гў
 View(sqldf("SELECT userInn, user, COUNT (userInn) AS cnt FROM datSQL GROUP BY userInn  ORDER BY cnt DESC LIMIT 10" ))
+
+
+# https://jasminedaly.com/tech-short-papers/sqldf_tutorial.html
 
 
 
