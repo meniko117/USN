@@ -1,0 +1,70 @@
+
+OKP_list<-read.csv("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/справочник ОКП (очищенный).csv", na.strings=c(" ", NA), stringsAsFactors=FALSE, header = TRUE, sep = ";")
+
+
+OKP_list$id <- seq(length=nrow(OKP_list))
+OKP_list<- as.data.frame(OKP_list [ , c(4,1,2,3)])
+
+
+
+library(stringr)
+
+
+
+
+
+# присваиваем признак "1" для позиции в подгруппе,т.е. названию начинающемуся с "-"
+for (i in  1:nrow(OKP_list)) {
+  
+  OKP_list$sub [i]<-ifelse(str_locate(OKP_list [i,4], "-") == 2 , 1, 0) 
+  
+}
+
+OKP_list$sub[is.na(OKP_list$sub)]<-""
+OKP_list$sub<-ifelse(OKP_list$sub==0, "", OKP_list$sub)
+
+
+
+for (i in  2:nrow(OKP_list)) {
+    
+    OKP_list$group [i]<-ifelse(OKP_list [i,5] == 1 && OKP_list [i-1,5] == "", OKP_list [i-1,4], "") 
+    OKP_list$group [i]<-ifelse(OKP_list [i,5] == 1 && OKP_list [i-1,5] == 1, OKP_list$group [i-1], OKP_list$group [i]) 
+        
+      }
+
+ 
+OKP_list$fulllName <- paste(OKP_list[ ,6], OKP_list[ ,4])
+
+write.csv(OKP_list, 'C:/Users/msmirnov/Documents/проект УСН/Анализ данных/ОКП парсинг.csv')
+
+
+
+
+# анализ текста
+library(quanteda)
+
+
+myCorpus <- corpus(c(check = OKP_list[1,4], 
+                     target1 = "электроэнергия, вода",
+                     target2 = "водка, лен"))
+
+myDfmNoStop <- dfm(myCorpus, remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
+
+sim <- textstat_simil(myDfmNoStop , 'check', method = "cosine", margin = "documents")
+
+
+
+
+for (i in  2:nrow(OKP_list)) {
+  
+  
+  myCorpus <- corpus(c(check = OKP_list[39145,7], 
+                       target1 = as.data.frame(dat2[3,28])[,4]
+  ))
+  
+  myDfmNoStop <- dfm(myCorpus, remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
+  sim <- textstat_simil(myDfmNoStop , 'check', method = "cosine", margin = "documents")
+  
+}
+
+OKP_list[grep("сахар",OKP_list[,7]), ]
