@@ -40,13 +40,48 @@ write.csv(OKP_list, 'C:/Users/msmirnov/Documents/проект УСН/Анали�
 
 
 
-# анализ текста
+
+
+  
+
+
+OKP_list[grep("шампанск",OKP_list[,7]), ]
+OKP_list[grep("картоф",OKP_list[,7]), ]
+
+
+
+# стемминг с помощью SnowballC (алгоритм Портера), который входит в библиотеку text2vec
+library (text2vec)
+
+# пишем функцию для стемминга
+stem_tokenizer1 =function(x) {
+  tokens = word_tokenizer(x)
+  lapply(tokens, SnowballC::wordStem, language="ru")
+}
+
+
+
+# добавляем колонку в српавочник ОКП с названием после проведения стемминга
+OKP_list$stem<-sapply(OKP_list[7],  stem_tokenizer1)
+
+
+# массив с содержанием чека добавляем колонку с названиями позиции после стемминга
+checkStem<-as.data.frame(dat2[3,28])
+checkStem$stem <-sapply(checkStem[4],  stem_tokenizer1)
+
+
+FUN <- function (x) paste(unlist(x), collapse = " ")
+
+checkStem$stemmedNames <-apply(checkStem[8], 1, FUN) 
+
+
+# анализ текста  для поиска косинусного расстояния используется библиотека Quanteda
 library(quanteda)
 
+myCorpus <- corpus(c(check = paste(unlist(OKP_list[39145,8]), collapse = " "), # название группы товаров из ОКП 
+                     
+                     target1 = checkStem$stemmedNames )) # содержание наименований конкретного чека из общего массива чеков 
 
-myCorpus <- corpus(c(check = OKP_list[1,4], 
-                     target1 = "электроэнергия, вода",
-                     target2 = "водка, лен"))
 
 myDfmNoStop <- dfm(myCorpus, remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
 
@@ -54,17 +89,7 @@ sim <- textstat_simil(myDfmNoStop , 'check', method = "cosine", margin = "docume
 
 
 
+# внесение данных по косинусному расстоянию в чек 
+checkStemFinal<-cbind(checkStem [,c(1:7)],  sim[c(2:length(sim))])
 
-for (i in  2:nrow(OKP_list)) {
-  
-  
-  myCorpus <- corpus(c(check = OKP_list[39145,7], 
-                       target1 = as.data.frame(dat2[3,28])[,4]
-  ))
-  
-  myDfmNoStop <- dfm(myCorpus, remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
-  sim <- textstat_simil(myDfmNoStop , 'check', method = "cosine", margin = "documents")
-  
-}
-
-OKP_list[grep("сахар",OKP_list[,7]), ]
+colnames(checkStemFinal)[8] <- paste (OKP_list[39145,7], OKP_list[39145,2], "/", OKP_list[39145,3])
