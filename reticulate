@@ -1,0 +1,18 @@
+library(reticulate)
+#use_condaenv('Python27')
+use_virtualenv("Python27") # так назавается на дом. компьютере
+lib <- import("pymorphy2")
+
+
+phrase<- list ("рано", "лошадь", "красил", "водица", "воняющий")
+phrase = r_to_py(phrase) #передача объекта в python
+
+morph = lib$MorphAnalyzer()
+
+library(stringr)
+
+for (i in 1:length(phrase)) { 
+  
+  print(str_sub(morph$tag(phrase[i-1]$decode('utf-8'))[[1]], start=1, end=4))
+  
+}
