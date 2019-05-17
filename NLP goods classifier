@@ -1,4 +1,3 @@
-
 OKP_list<-read.csv("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/справочник ОКП (очищенный).csv", na.strings=c(" ", NA), stringsAsFactors=FALSE, header = TRUE, sep = ";")
 
 
@@ -93,3 +92,63 @@ sim <- textstat_simil(myDfmNoStop , 'check', method = "cosine", margin = "docume
 checkStemFinal<-cbind(checkStem [,c(1:7)],  sim[c(2:length(sim))])
 
 colnames(checkStemFinal)[8] <- paste (OKP_list[39145,7], OKP_list[39145,2], "/", OKP_list[39145,3])
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################
+# POS токенизация - определение частей речи
+
+library(reticulate) # для работы с Python
+
+lib <- import("pymorphy2")
+
+
+phrase = r_to_py(phrase) #передача объекта в python
+
+
+
+morph = lib$MorphAnalyzer()
+
+
+library(stringr)
+
+
+
+# POS токенизация после стемминга
+for (i in 1:length(unlist(checkStem[3,8]))) { 
+  
+  
+  
+  print(str_sub(morph$tag(unlist(checkStem[3,8])[i])[[1]], start=1, end=4))
+  
+  
+}
+
+
+
+
+#word_tokenizer(checkStem[11,4]) # токенизация из библиотеки text2vec
+
+
+# токенизация до стемминга (учитывает окончания и правильно определяет часть речи)
+for (i in 1:length(unlist(checkStem[3,8]))) { 
+  
+  
+  
+  print(str_sub(morph$tag(unlist(word_tokenizer(checkStem[3,4]))[i])[[1]], start=1, end=4))
+  
+  
+}
+
