@@ -3,7 +3,7 @@ library (jsonlite)
 
 
 library(plyr) # библиотека необходима для использования rbind.fill 
-# склеивания таблиц "одна под другой" при условии разного количесвтва колонок и навзаний колонок
+# склеивания таблиц "одна под другой" при условии разного количества колонок и названий колонок
 
 BD <-  fromJSON( sprintf("[%s]",
                          paste(readLines("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/big_chunk_1_new.json", encoding = "UTF-8"),
@@ -76,11 +76,19 @@ dat3<- cbind(BD, vec)
 # остортированная таблица с пустыми чеками в поле items
 emptyItemsChecks <- subset(dat3, dat3[,ncol(dat3)]==1) 
 
-# отсортированная таблица с чеками с непустым массивом в содержании (может не быть нвзания позиций. но есть сумма проч.)
+# отсортированная таблица с чеками с непустым массивом в содержании Items (может не быть нвзания позиций. но есть сумма проч.)
 fullChecks <- subset(dat3, dat3[,ncol(dat3)]==0)
 
 
 
+
+
+
+
+
+
+
+#собираем массив со всеми полями в нутри чеков
 #инициализируем массив с навзаниями полей в чеке
 colNamesArray<-as.data.frame(colnames(as.data.frame(fullChecks[1,24])))
 colnames(colNamesArray)<- "colNamesEl"
@@ -102,12 +110,13 @@ for (i in  2:nrow(fullChecks)) {
 
 
 
-
+# поиск поля с названием в базе
 grep("fiscalDocumentFormatVer", colnames(BD))
 grep("protocolVer", colnames(BD))
-grep("j1060", colnames(BD))
+grep("receiptCode", colnames(BD))
+grep("receiptCode", colNamesArray)
 
-tt1<- subset(BD,  !is.na(BD[,75])) # чеки с заполненным "fiscalDocumentFormatVer"
+tt1<- subset(BD,  !is.na(BD[,15])) # чеки с заполненным "fiscalDocumentFormatVer"
 
 
 
@@ -120,59 +129,48 @@ head(BD%>%
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 # поле CreditSum не NA и в чеке более 1-й позиции
-# Subs1<-subset(BD, (!is.na(BD[,32]))) # & nrow(as.data.frame(BD[,24]))>1)
-# 
-# Subs2<- subset(Subs1, Subs1[,32]>0)
-
-Subs3<- subset( BD, BD[,32]>0)  
 
 
-fun<- function(x) { grep("paymentType", colnames(as.data.frame(x)))
-  
-}
+Subs3<- subset( BD, !is.na(BD[,32]))  # сортировка исходной выборки на отличные от NA значения в поле creditSum
 
-#колонка, в чеке, в которой находится paymentType
-Subs3$PayTypeColnum<-sapply(Subs3[,24],  fun)
 
 
 #признак, если хотя бы одна позиция в чеке имеет paymentType 5 или 6
 for (i in  1:nrow(Subs3)) {
   
-  Subs3$PaymentType5[i]<-ifelse( 5%in% as.data.frame(Subs3[i,24]) [,unlist(Subs3$PayTypeColnum[i])] || 
-                                   6%in% as.data.frame(Subs3[i,24]) [,unlist(Subs3$PayTypeColnum[i])], 1, 0) 
+  Subs3$PaymentType5[i]<-ifelse( 5%in% as.data.frame(Subs3[i,24])$paymentType || 
+                                   6%in% as.data.frame(Subs3[i,24])$paymentType, 1, 0) 
   
 }
 
 # сортируем 
-Subs4<- subset( Subs3,   Subs3$PaymentType5==1 )  
-
-
-
-
-
-  
-  
-# allPaymentTypes<-0
-# 
-# for (i in  1:nrow(Subs4)) {
-# allPaymentTypes<-append(allPaymentTypes, unlist(as.data.frame(Subs3[i,24])[,unlist(Subs3$PayTypeColnum[i])]))
-# 
-# }
-
+Subs4<- subset( Subs3,   Subs3$PaymentType5==1 )  # получили все чеки, где paymentType 5 или 6
 
 
 
 
 # сортировка чеков creditSum >0 и кол-во Items >1
 
-fun2<- function(x) { nrow(as.data.frame(x))
-  
-}
+fun2<- function(x) { nrow(as.data.frame(x))}
 
 Subs3$posNum<-sapply(Subs3[,24], fun2)
 
-BD$posNum<-sapply(BD[,24], fun2)
+BD$posNum<-sapply(BD[,24], fun2) # количество позиций в чеке
+#а вот так не работает: BD$posNum<-nrow(as.data.frame(BD[,24]))
 
 #кол-во позиций в чеке
 Subs4$posNum<-sapply(Subs4[,24], fun2)
@@ -200,45 +198,92 @@ uniq_subtypes<-as.data.frame(unique(BD$subtype))
 
 ##############################
 
+
 BD_checks_inside<- BD
 
-bankAgentRemuneration
+
 
 
 # функция, возвращающая TRUE если выполняется условие, когда все значения вектора со строковыми переменными присутствуют в названиях колонок чека
 fun_ag<-function(x) { 
   all(sapply(as.data.frame(
   
-  sapply(c("bso","corr"), grepl, colnames(as.data.frame(x)), ignore.case=TRUE)
+  sapply(c("providerName"), grepl, colnames(as.data.frame(x)), ignore.case=TRUE) # можно вставлять в вектор искомых значений, например, , "pho", "nam"
   
-  ), any)) }
+  ), any)) } # функция grepl 
 
-# сортируем массив, применяя функцию ко всем рядам исходдно data.frame
+
+# сортируем массив, применяя функцию ко всем рядам исходдно data.frame и получаем массив чеков, где содержатся нужные поля, после применения 
+# функции fun_ag для определния полей
 BD_AgentData<- subset(BD_checks_inside, sapply(BD_checks_inside[,24],  fun_ag))
 
 
-###########################################################################
-# по количеству позиций в чеках статистика
-summary(BD$posNum)
+# собираем в вектор значений все содержимое непустых полей paymentType
+paymentTypes<-vector()
+providerInn_vec<- vector()
+  
+for (i in  1:nrow(BD_AgentData)) {
+  
+  
+  #paymentTypes<-append(paymentTypes, as.data.frame(BD_AgentData[i,24])$paymentType)
+  providerInn_vec<-append(providerInn_vec, nchar(as.data.frame(BD_AgentData[i,24])$providerInn) )
+ 
+  
+}
+
+table(paymentTypes) # как распределяются занчения в векторе
+table(providerInn_vec)
+
+providerInn_vec_space<- vector()
+
+# функция для определения имюеются ли пробелы в строковой переменной
+  fun_space<-function(x){grep(" ", x)}
+
+  providerInn_vec_space<-sapply( as.data.frame(BD_AgentData[400,24])$providerInn,   fun_space )
+  
+ # инициализируем пустой вектор 
+  providerInn_vec_types<-vector() 
+  
+  # собираем в массив все значения, например, из providerInn
+  for (i in 1:nrow(BD_AgentData)){
+
+  #paymentTypes<-append(paymentTypes, as.data.frame(BD_AgentData[i,24])$paymentType)
+  #providerInn_vec<-append(providerInn_vec, nchar(as.data.frame(BD_AgentData[i,24])$providerInn) )
+  #providerInn_vec<-append(providerInn_vec, as.data.frame(BD_AgentData[400,24])$providerInn )
+  
+  providerInn_vec_types<-append(providerInn_vec_types, as.data.frame(BD_AgentData[i,24])$providerInn)
+  
+  }
+  
+  
+  providerInn_vec<- as.data.frame(providerInn_vec)
+  
+  providerInn_vec_types<- as.data.frame(providerInn_vec_types)
+  fun_space<- function(x) {length(grep(" ", x)) }
+  providerInn_vec_types$symb<-sapply(providerInn_vec_types[,1], fun_space) # добавляем колонку имются ли пробелы 
+  
 
 
-hist(head(subset(BD$content.totalSum, !is.na(BD$content.totalSum))))
+
+  
+table(providerInn_vec_types[,2]==1) # количество полей с ИНН, куда входит пробел (все ИНН 12-значные, но у некторых послдений два знака - пробелы)
+table(is.na(providerInn_vec_types[,1])) # количество NA = TRUE (т.е. где не заполен providerInn)
+
+tt5<-subset(providerInn_vec_types, providerInn_vec_types[,2]==1)
+
+kktREG<-nchar(BD$kktRegId)
+
+unique(kktREG)
+length(kktREG)
 
 
-hist(subset(BD$content.totalSum, !is.na(BD$content.totalSum))[ c(1:1000000)], ylim=c(0,5))
 
-# гистограмма чеков без макс значения (сумма 3 572 355 870 руб - техническая нисправность)
-hist(subset(BD$content.totalSum, !is.na(BD$content.totalSum)[ c(1:1000000)] & BD$content.totalSum <3572355870), ylim=c(0,20))
-hist(subset(BD$content.totalSum, !is.na(BD$content.totalSum)[ c(1:1000000)] & BD$content.totalSum <100000), breaks =10, xlim=c(0,120000), ylim=c(0,400000))
-hist(subset(BD$content.totalSum, !is.na(BD$content.totalSum)[ c(1:1000000)] & BD$content.totalSum >=100000 & BD$content.totalSum <120000000), 
-     breaks =5000, xlim=c(0,1000000), ylim=c(0,30000))
-hist(subset(BD$content.totalSum, !is.na(BD$content.totalSum)[ c(1:1000000)] & BD$content.totalSum >=120000000 ), 
-     breaks =150, xlim=c(150000000,400000000), ylim=c(0,10))
 
-boxplot(subset(BD$content.totalSum, !is.na(BD$content.totalSum) & BD$content.totalSum <100000))
 
-max(subset(BD$content.totalSum, !is.na(BD$content.totalSum)))
+library(readr)
+library(jsonlite)
+dat2 %>% 
+  toJSON() %>%
+  write_lines("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/dat2.json")
 
-subset(BD, BD$content.totalSum==3572355870)
-
-BD_closeShif<-(subset(BD, BD$subtype=="closeShift"))
+               
