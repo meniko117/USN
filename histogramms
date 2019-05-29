@@ -1,0 +1,30 @@
+library(ggplot2)
+library(ggpubr)
+
+
+
+# гистограмма 
+# чек на 3,5 млрд руб
+hist1<-ggplot(BD, aes(x=BD$content.totalSum)) + geom_histogram(bins=200) + scale_y_continuous( breaks = c(0:7), limits=c(0, 7)) + labs(x = "Сумма чека, руб", y = "Кол-во чеков")+ scale_x_continuous(labels = scales::comma, limits=c(0, 5000000000))
+hist2<-ggplot(BD, aes(x=BD$content.totalSum)) + geom_histogram(bins=200) + scale_y_continuous( limits=c(0, 3000)) + labs(x = "Сумма чека, руб", y = "Кол-во чеков")+ scale_x_continuous(labels = scales::comma, limits=c(0, 10000000))
+hist3<-ggplot(BD, aes(x=BD$content.totalSum)) + geom_histogram(bins=200) + xlim(c(50000,1000000)) + ylim(c(0, 5000)) + labs(x = "Сумма чека, руб", y = "Кол-во чеков")
+hist4<-ggplot(BD, aes(x=BD$content.totalSum)) + geom_histogram(bins=200) + xlim(c(0,250000)) + ylim(c(0, 15000)) + labs(x = "Сумма чека, руб", y = "Кол-во чеков")
+
+
+figure<- ggarrange(hist1, hist2, hist3, hist4, 
+                   labels = c("A", "B", "C", "D"),
+                   ncol = 2, nrow = 2)
+
+# количество чеков с кол-вом позиций 1,2,3
+hist7<-ggplot(BD, aes(x=BD$posNum)) + geom_histogram(bins=10) + scale_x_continuous(name = "Кол-во позиций в чеке", breaks = c(1:3), limits=c(1, 3)) + scale_y_continuous(name = "Кол-во чеков", labels = scales::comma, limits=c(0, 500000))+ geom_bar( width = 0.1)
+
+
+# количество чеков с кол-вом позиций 0, 4-10
+hist8<-ggplot(BD, aes(x=BD$posNum)) + geom_histogram(bins=50)    + ylim(c(0, 70000))+  
+  scale_x_continuous(name = "Кол-во позиций в чеке", breaks = c(0:10), limits=c(-1, 11)) + geom_bar( width = 0.5)
+
+
+
+figure2<- ggarrange( hist7, hist8, 
+                   labels = c("A", "B", "C", "D"),
+                   ncol = 1, nrow = 2)
