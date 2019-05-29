@@ -1,0 +1,57 @@
+library(docxtractr)
+
+real_world <- read_docx("C:/Users/msmirnov/Documents/проект УСН/Документация/25.04.2019_проект_протокола информационного обмена_ОФД-ФНС_ФФД 1.1 (1).docx")
+number_of_tables<-docx_tbl_count(real_world)
+
+tbls <- docx_extract_all_tbls(real_world)
+
+colnames(as.data.frame(tbls[70]))[1]
+
+
+protocol_items<-as.data.frame(tbls[1])
+  
+for (i in  2:number_of_tables) {
+  
+  
+  protocol_items<- rbind.fill(protocol_items, as.data.frame(tbls[i]))
+  
+}
+
+all_reqs<-subset( protocol_items$Имя.реквизита.в.формате.JSON, !is.na(protocol_items$Имя.реквизита.в.формате.JSON))
+
+unique(all_reqs)
+
+union(as.character(col_names_BD), unique(all_reqs))
+
+colnames(col_names_BD)[1]<-"reqs"
+all_reqs<- as.data.frame(all_reqs)
+colnames(all_reqs)[1]<-"reqs"
+
+col_names_BD$num<-1
+all_reqs$num<-1
+
+
+col_names_BD<-as.data.frame(col_names_BD)
+
+library(stringr)
+str_sub(unlist(factor(col_names_BD[24,1])), 
+        
+        start= as.numeric(regexpr("\\.[^\\.]*$", as.character(factor(col_names_BD[24,1]))))+1
+        
+        , end=str_length( as.character(factor(col_names_BD[24,1]))) )
+
+#str_locate_all
+
+g <- regexpr("\\.[^\\.]*$", as.character(factor(col_names_BD[24,1])))
+as.numeric(g)
+
+colnames_BD$parse<-sapply (colnames_BD, )
+
+#dplyr
+all_reqs_comparison<-full_join(col_names_BD, unique(all_reqs), by= "reqs")
+
+#base
+all_reqs_comparison<- merge(unique(all_reqs), col_names_BD, by = "reqs", all=TRUE)
+
+
+
