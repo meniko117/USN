@@ -1,3 +1,4 @@
+
 OKP_list<-read.csv("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/справочник ОКП (очищенный).csv", na.strings=c(" ", NA), stringsAsFactors=FALSE, header = TRUE, sep = ";")
 
 
@@ -49,6 +50,20 @@ OKP_list[grep("картоф",OKP_list[,7]), ]
 
 
 
+# Библиотеки R
+# text2vec - для стемминга (отбрасывания окончаний)
+# quanteda - для поиска косинусного расстояния между вектрами слов (например, всеми позициями в чеке и названиями в ОКП)
+
+# Библиотеки Python
+# pymorphy2 - для определения частей речи POS (возможно, понадобится для назаначения весовых коэффициентов)          
+# gensim, word2vec - для тематического моделирования, т.е. поиска слов имеющих семантическую близость (вкл. синонимы)
+
+
+
+
+
+
+
 # стемминг с помощью SnowballC (алгоритм Портера), который входит в библиотеку text2vec
 library (text2vec)
 
@@ -64,7 +79,7 @@ stem_tokenizer1 =function(x) {
 OKP_list$stem<-sapply(OKP_list[7],  stem_tokenizer1)
 
 
-# массив с содержанием чека добавляем колонку с названиями позиции после стемминга
+# в массив с содержанием 1-го конкретного чека добавляем колонку с названиями позиции после стемминга
 checkStem<-as.data.frame(dat2[3,28])
 checkStem$stem <-sapply(checkStem[4],  stem_tokenizer1)
 
@@ -84,13 +99,16 @@ myCorpus <- corpus(c(check = paste(unlist(OKP_list[39145,8]), collapse = " "), #
 
 myDfmNoStop <- dfm(myCorpus, remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
 
-sim <- textstat_simil(myDfmNoStop , 'check', method = "cosine", margin = "documents")
+sim <- textstat_simil(myDfmNoStop , 'check', method = "cosine", margin = "documents") # нашли косинусное расстояние между вектором со словами в чеке и в ОКП
+# первые 2 позиции в чеке "сахар", поэтому у обоих косинусное рассотяние отлично от "0" при сравнении с позицией ОКП " Сахар - песок /  - из сахарной свеклы"
 
 
 
 # внесение данных по косинусному расстоянию в чек 
 checkStemFinal<-cbind(checkStem [,c(1:7)],  sim[c(2:length(sim))])
 
+# получаем чек с указанием полей из ОКП и косинусного расстояния для каждой позиции
+# далее можно будет выбрать с какой категорией коэф. больше и классифицирвать позицию из чека в эту категорию
 colnames(checkStemFinal)[8] <- paste (OKP_list[39145,7], OKP_list[39145,2], "/", OKP_list[39145,3])
 
 
@@ -108,9 +126,39 @@ colnames(checkStemFinal)[8] <- paste (OKP_list[39145,7], OKP_list[39145,2], "/",
 
 
 ##############################################
-# POS токенизация - определение частей речи
+# POS токенизация - определение частей речи (возможно пригодиться для выставления весовых коэффициентов, т.к. семантически совпадения по существительным 
+# дает бОльшую смысловую нагрузку, чем по прилагательным)
 
 library(reticulate) # для работы с Python
+
+
+# дистрибутивная семантика
+# запускаем python скрипт, который загружает натренированную модель в память
+setwd("C:/Users/msmirnov/")
+source_python("C:/Users/msmirnov/Documents/R scripts/gensim_distr_semantics.py")
+
+# загрузка модели без использования python скрипта
+model<-gensim$models$KeyedVectors$load_word2vec_format("C:/Users/msmirnov/model.bin", binary=TRUE)
+
+model$wv$most_similar("газовый_ADJ") # выводим перечень слов из модели, которые семантически близки к заданному
+
+model$wv$most_similar(t)
+
+model$wv$most_similar("смесь_NOUN")
+
+
+t<- paste("смесь", "_NOUN", sep="")
+
+
+
+
+
+
+
+
+
+
+
 
 lib <- import("pymorphy2")
 
@@ -151,4 +199,3 @@ for (i in 1:length(unlist(checkStem[3,8]))) {
   
   
 }
-
