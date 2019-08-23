@@ -1,14 +1,14 @@
 library (data.table)
 library(plyr)
-
+library(fst)
 
 
 
 
 # ??????????? csv ? fst
 
-library(fst)
-library(plyr)
+
+
 
 for (i in(19:24)){
   
@@ -352,12 +352,12 @@ rat<-rbind.fill(rat, rat_i)
 
 for (i in (2:50)){
   
-  cols<-which(colnames(fst(paste0( i, ".fst"))) %in%  tt[c(11, grep("hone", tt[,1])),]) # ???????? ?????, ?????????? "phone" ???????? ? ??????
+  cols<-which(colnames(fst(paste0("C:/Users/msmirnov/Documents/", i, ".fst"))) %in%  tt[c(11, grep("hone", tt[,1])),]) # ???????? ?????, ?????????? "phone" ???????? ? ??????
   
   ifelse(identical(cols, integer(0)),
          rat_i<-rat_i,
          
-         rat_i<-read_fst(paste0( i, ".fst"), columns= colnames(fst(paste0( i, ".fst")))[cols]) )
+         rat_i<-read_fst(paste0( "C:/Users/msmirnov/Documents/", i, ".fst"), columns= colnames(fst(paste0( "C:/Users/msmirnov/Documents/", i, ".fst")))[cols]) )
   rat_i<- unique(rat_i, by = "id")
   
   rat<-rbind.fill(rat, rat_i)
@@ -415,19 +415,20 @@ unique_credit<- unique(credit, by = "id")
 rat2<- list()
 for (i in (1:50)){
   
-  cols<-which(colnames(fst(paste0( i, ".fst"))) %in%  tt[c(11, grep("subtype", tt[,1]), grep("azart", tt[,1])),] ) #11 - ??? ??????? ? id
+  cols<-which(colnames(fst(paste0("C:/Users/msmirnov/Documents/", i, ".fst"))) %in%  tt[c(11, grep("paymentType", tt[,1]), grep("transm", tt[,1])),] ) #11 - ??? ??????? ? id
   
   ifelse(identical(cols, integer(0)),
          rat_i<-rat_i,
          
-         rat_i<-read_fst(paste0( i, ".fst"), columns= colnames(fst(paste0( i, ".fst")))[cols]) )
+         rat_i<-read_fst(paste0("C:/Users/msmirnov/Documents/", i, ".fst"), columns= colnames(fst(paste0("C:/Users/msmirnov/Documents/", i, ".fst")))[cols]) )
   #rat_i<- unique(rat_i, by = "id")
   
   rat2<-rbind.fill(rat2, rat_i)
   
 }
 
-
+# проверка есть ли хоть 1 поле отличное от NA
+rat2$flag<- apply(rat2[, c(2:49)], 1, function(x) {!anyNA(x)})
 
 # ??????????? ?? ???, ? ??????? ??????? ????? 2-? ????? paymentType ? items
 library (reshape2)
@@ -457,7 +458,7 @@ rat<-rbind.fill(rat, rat_i)
 
 
 
-# ????? ?????????, ??????? ??????????? ?????? ? ????? (???), ????? ????????? (??? ?????????) ? ?? ??????????? ? ?????????
+# проверка какие реквизиты из общей таблицы принадлежат чеку
 
 
 
@@ -499,3 +500,63 @@ subset(as.data.frame(unlist(req_belong_to_check)), as.data.frame(unlist(req_belo
 
 
 requisites_present_in_checks<- as.data.frame(tt[which( req_belong_to_check != "no"), 1])
+
+
+#
+#
+#  
+#
+# поиск чеков для валидации "корзинок" с иточниками сумм
+
+
+rat2<- list()
+for (i in (1:50)){
+  
+  toMatch <-  c("id", "providerInn")
+    
+    #c("id","code", "receiptCode", "bsoCode", "operationType", "paymentAgentType", "prepaidSum", "creditSum", "provisionSum", "paymentType", "productType", "paymentAgentByProductType", "providerInn" )
+  
+  selected_columns <- unique (grep(paste(toMatch,collapse="|"), 
+                                   colnames(fst(paste0("C:/Users/msmirnov/Documents/", i, ".fst"))), value=TRUE))
+  
+  cols<-which(colnames(fst(paste0("C:/Users/msmirnov/Documents/", i, ".fst"))) %in%  selected_columns ) #11 - ??? ??????? ? id
+  
+  ifelse(identical(cols, integer(0)),
+         rat_i<-rat_i,
+         
+         rat_i<-read_fst(paste0("C:/Users/msmirnov/Documents/", i, ".fst"), columns= colnames(fst(paste0("C:/Users/msmirnov/Documents/", i, ".fst")))[cols]) )
+  #rat_i<- unique(rat_i, by = "id")
+  
+  rat2<-rbind.fill(rat2, rat_i)
+  
+}
+
+
+apply(rat2[, c(2:49)], 1, function(x) {!anyNA(x)})  
+
+ 
+
+
+toMatch_H <- c("id", "receiptCode", "operationType", "paymentAgentType", "paymentType", "productType", "paymentAgentByProductType")
+
+cols<-which(colnames(rat2) %in% grep(paste(toMatch_H,collapse="|"), colnames(rat2), value=TRUE))
+
+rat2$complete<-apply(rat2[, cols], 1, function(x) {complete.cases(x)}) 
+
+
+
+basket_H<- subset(rat2, rat2$content.operationType==1 & (is.na(rat2$content.paymentAgentType) | rat2$content.paymentAgentType== -1)  & 
+                    rat2$content.items.paymentType==3 & ( is.na(rat2$content.items.productType)  | rat2$content.items.productType ==10) &
+                  (is.na(rat2$content.items.paymentAgentByProductType) | rat2$content.items.paymentAgentByProductType == -1))
+
+
+basket_I<- subset(rat2, rat2$content.operationType==1 &  
+                    rat2$content.items.paymentType==4 & ( is.na(rat2$content.items.productType)  | rat2$content.items.productType != c(16:25)) &
+                    (is.na(rat2$content.items.paymentAgentByProductType) | rat2$content.items.paymentAgentByProductType == -1))
+
+basket_J<- subset(rat2, rat2$content.operationType==1 &  rat2$content.paymentAgentType %in% c(1,2,4,8,16,32) & 
+                    rat2$content.items.paymentType==3 &  rat2$content.items.productType %in% c(1, 3,4,10) &
+                    rat2$content.items.paymentAgentByProductType %in% c(1, 2, 4, 8, 16, 32, 64)  )
+
+
+                  
