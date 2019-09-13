@@ -390,6 +390,7 @@ model$wv$most_similar(t)
 # обработка для ГИР БО
 all_atr_names<- read.csv('C:/Users/msmirnov/Documents/ГИР БО/all_atr_names.csv', row.names = NULL, header = TRUE, sep = ";")
 
+all_atr_names<- read.csv('C:/Users/msmirnov/Documents/ГИР БО/all_atr_names_TEST.csv', row.names = NULL, header = TRUE, sep = ";")
 
 
 #all_atr_names$stemmedNames<- sapply(all_atr_names [,1],  stem_tokenizer1)
@@ -445,6 +446,14 @@ all_atr_names$noStopWords<-sapply( all_atr_names[,3], function (x) {paste(as.cha
 
 abbreviation_function<- function (x) paste(unlist(lapply( as.character(tokens(x)), function (x) { abbreviate(x, 4, strict = TRUE) })), collapse = " ")
 
+
+# функция для сокращения слов в зависимости от длины слова
+abbreviation_function<-  function (x) paste(unlist(lapply( as.character(tokens(x)), function (x) { ifelse(nchar(x)>10, abbreviate(x, 6, strict = FALSE), abbreviate(x, 5, strict = TRUE)) })), collapse = " ")
+
+
+
+
+library (snakecase)
 system.time({ 
 all_atr_names$snakeCase <- sapply(all_atr_names[,4], function (x) {to_snake_case(abbreviation_function(x), abbreviations = NULL, sep_in = "[^[:alnum:]]", parsing_option = 1, transliterations = NULL, numerals = "middle", sep_out = NULL, unique_sep = NULL, empty_fill = NULL, prefix = "", postfix = "")})
 })    
@@ -454,6 +463,27 @@ all_atr_names$snakeCase <- sapply(all_atr_names[,4], function (x) {to_snake_case
 
 
 write.table(all_atr_names, 'C:/Users/msmirnov/Documents/ГИР БО/all_atr_names_translated.csv',  sep = ";")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
