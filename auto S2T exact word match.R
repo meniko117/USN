@@ -50,12 +50,16 @@ no_stop_words_function<- function (x) {  paste(   unlist(strsplit(x, " "))[!(unl
 # функция для очистки текста от пунктуации
 no_punctuation_function<- function (x) {paste(unlist(tokens(as.character(x), remove_punct = TRUE)), collapse= " ")}
 
+
+
 # загружаем данные с названиями полей на русском для перевода на английский 
 all_atr_names<- read.csv('C:/Users/msmirnov/Documents/ГИР БО/all_atr_names_TEST.csv', row.names = NULL, header = TRUE, sep = ";")
 
-
 # создаем колонку со словами, приведенными к нормальной форме
 all_atr_names$normalizedForm<- sapply(as.character(all_atr_names [,1]), function (x) {no_stop_words_function(no_punctuation_function(no_digits_function(normal_form_function_paste(x))))} )
+
+###############################
+
 
 
 
@@ -122,60 +126,52 @@ vocab [,1]<- tolower(vocab [,1] )
 vocab [,2]<- tolower(vocab [,2] )
 
 
-# разбиваем справочник на 2 категории: фразы и слова
+# разбиваем справочник на 2 категории: словосочетания (фразы) и слова
 
 vocab_phrase<- subset (vocab , str_detect (vocab [,1], ' '))
 vocab_word<- subset (vocab , !str_detect (vocab [,1], ' '))
 
 
 
-# замена фраз
+# замена словосочетаний
+# словосочетания меняются при нахождении тождественного паттерна внутри целой фразы
+# отдельные слова меняются при нахождении полного соответсвия конкретному слову, иначе возможны ошибки 
+# например, при нахождении "report", должна быть замена на "rpt", "reporting" на "rptg", при реализации не точного соответствия 1 в 1,
+# а соответствия паттерну, то замена будет "reporting" на "rpting"
 
 
-for (i in 1: nrow(all_atr_names) ) { 
-  
+for (i in 1: nrow(all_atr_names) ) {
+
   all_atr_names$vocab[i]<-  all_atr_names[i ,4]
-  for (j in 1:nrow(vocab_phrase)) { 
-    
-    
+  for (j in 1:nrow(vocab_phrase)) {
+
+
     all_atr_names$vocab[i]<-ifelse( !is.na(str_locate (all_atr_names[i ,4] ,  vocab_phrase [j,1]) )[1],  #|| !is.na(str_locate (all_atr_names$vocab[i] ,  tolower(vocab [j,1])) )[1]
                                     gsub(vocab_phrase [j,1], vocab_phrase[j,2], all_atr_names$vocab[i]), all_atr_names$vocab[i] )
-   
+
   }
 }
 
 
 # замена слов
+# по исходным данным проходимся 2-й раз циклом т.к. сначала сравниваем данные для замены со списком фраз vocab_phrase, а потом со списком слов vocab_word
 
-for (i in 1: nrow(all_atr_names) ) { 
-  
-  #all_atr_names$vocab[i]<-  all_atr_names$vocab[i] 
-  for (j in 1:nrow(vocab_word)) { 
-    
+
+for (i in 1: nrow(all_atr_names) ) {
+
+
+  for (j in 1:nrow(vocab_word)) {
+
     all_atr_names$vocab[i]<-ifelse( !is.na(str_locate (all_atr_names$vocab[i] ,  vocab_word [j,1]) )[1],  #|| !is.na(str_locate (all_atr_names$vocab[i] ,  tolower(vocab [j,1])) )[1]
-                                    paste(unlist(lapply (strsplit(all_atr_names$vocab[i], split  =" ")[[1]], 
-                                    function (x) {str_replace( x, paste0("\\b",vocab_word [j,1],"\\b"), vocab_word[j,2] )})), collapse = ' '), 
+                                    paste(unlist(lapply (strsplit(all_atr_names$vocab[i], split  =" ")[[1]],
+                                    function (x) {str_replace( x, paste0("\\b",vocab_word [j,1],"\\b"), vocab_word[j,2] )})), collapse = ' '),
       all_atr_names$vocab[i] )
-    
-    
+
+
   }
 }
 
-# 
-# # тест цикла
-# for (i in 1: nrow(all_atr_names) ) {
-# 
-#   #all_atr_names$vocab[i]<-  all_atr_names$vocab[i]
-#   for (j in 1:nrow(vocab)) {
-# 
-#     all_atr_names$vocab2[i]<-ifelse( !is.na(str_locate (all_atr_names$vocab[i] ,  vocab [j,1]) )[1],  #|| !is.na(str_locate (all_atr_names$vocab[i] ,  tolower(vocab [j,1])) )[1]
-#                                     paste(unlist(lapply (strsplit(all_atr_names$vocab[i], split  =" ")[[1]],
-#                                                          function (x) {str_replace( x, paste0("\\b",vocab [j,1],"\\b"), vocab[j,2] )})), collapse = ' '),
-#                                     all_atr_names$vocab[i] )
-# 
-# 
-#   }
-# }
+
 
 
 
@@ -199,6 +195,8 @@ write.table (all_atr_names[, c(1,4, 7)],'C:/Users/msmirnov/Documents/ГИР БО
 
 
 
+# библиотека fastmatch для быстрой замены значений из списка по словарю
+# не подошла при поиске и замене фраз
 
 # # берем слова из загруженного глоссария
 # syn_1<- vocab[,1]
@@ -212,10 +210,6 @@ write.table (all_atr_names[, c(1,4, 7)],'C:/Users/msmirnov/Documents/ГИР БО
 # 
 # library(fastmatch)
 # 
-# syn_1 = c("nice", "like")
-# names(syn_1) = rep('happy_emotion', length(syn_1))
-# syn_2 = c("automobile")
-# names(syn_2) = rep('car', length(syn_2))
 
 # syn_replace_table = c(syn_1, syn_2)
 

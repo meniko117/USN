@@ -9,7 +9,7 @@ library (reticulate)
 
 # кроме справочника ОКП еще должен быть использован справочник услуг (Общероссифский классификатор услуг населению -ОКУН)
 
-OKP_list<-read.csv("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/справочник ОКП (очищенный).csv", na.strings=c(" ", NA), stringsAsFactors=FALSE, header = TRUE, sep = ";")
+OKP_list<-read.csv("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/ОКП парсинг.csv", na.strings=c(" ", NA), stringsAsFactors=FALSE, header = TRUE, sep = ";")
 
 
 OKP_list$id <- seq(length=nrow(OKP_list))
@@ -214,7 +214,7 @@ normal_form_function_paste<- function(x) {paste(unlist(lapply( unlist(strsplit((
 # оичщаем от цифр
 no_digits_function<- function(x) {stringi::stri_replace_all_regex(x, "\\d", "")}
 # убрать стоп-слова из текста
-russianStopWords<- c("с", "в", "на", "перед", "из", "г", "кг", "килограмм" ,"мл", "л", "литр", "вес")
+russianStopWords<- c("с", "в", "на", "перед", "из", "г", "кг", "килограмм" ,"мл", "л", "литр", "вес", "год")
 # оичщаем от стоп-слов
 no_stop_words_function<- function (x) {  paste(   unlist(strsplit(x, " "))[!(unlist(strsplit(x, " "))) %in% russianStopWords], collapse =" " ) }
 
@@ -261,7 +261,7 @@ system.time({
 # 
 
 # название позиции из конкретного чека сравниваем со всеми группами из ОКП
-myCorpus <- corpus(c(check_item = checkStem$normilizedForm[99] , 
+myCorpus <- corpus(c(check_item = checkStem$normilizedForm[12] , 
                      
                      target1 = OKP_list[,11] )) # target1 - наименования всех позиций из общего массива чеков 
 
@@ -271,7 +271,7 @@ myCorpus <- corpus(c(check_item = checkStem$normilizedForm[99] ,
 
 myDfmNoStop <- dfm(myCorpus, remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
 
-# нашли косинусное расстояние между вектором с наименованиями в чеках и конкретной  группе ОКП 
+# нашли косинусное расстояние между позицией в чеке и всеми группами ОКП 
 sim <- textstat_simil(myDfmNoStop , 'check_item', method = "cosine", margin = "documents") 
 # первые 2 позиции в чеке "сахар", поэтому у обоих косинусное рассотяние отлично от "0" при сравнении с позицией ОКП " Сахар - песок /  - из сахарной свеклы"
 
@@ -301,7 +301,7 @@ subset_cosine_OKP<-subset_cosine_OKP[order(subset_cosine_OKP$sim_coef, decreasin
 
 # расчет косинусного расстояния между результатми стемиминга
 
-myCorpus <- corpus(c(check_item = checkStem$stemmedNames[99] , 
+myCorpus <- corpus(c(check_item = checkStem$stemmedNames[114] , 
                      
                      target1 = OKP_list$stemmedNames )) # target1 - наименования всех позиций из общего массива чеков 
 
@@ -348,6 +348,74 @@ subset_cosine_OKP_stemmed<-subset_cosine_OKP_stemmed[order(subset_cosine_OKP_ste
 
 
 
+
+
+
+
+
+
+
+
+
+
+# перебор позиций в чеке для определения наиболее вероятной группы из ОКП
+
+system.time({ 
+
+for (i in  1:23) {
+  
+  # название позиции из конкретного чека сравниваем со всеми группами из ОКП
+  myCorpus <- corpus(c(check_item = checkStem$normilizedForm[i] , 
+                       
+                       target1 = OKP_list[,11] )) # target1 - наименования всех позиций из общего массива чеков 
+  
+  
+  
+  
+  
+  myDfmNoStop <- dfm(myCorpus, remove = stopwords("english"), stem = TRUE, remove_punct = TRUE)
+  
+  # нашли косинусное расстояние между позицией в чеке и всеми группами ОКП 
+  sim <- textstat_simil(myDfmNoStop , 'check_item', method = "cosine", margin = "documents") 
+  # первые 2 позиции в чеке "сахар", поэтому у обоих косинусное рассотяние отлично от "0" при сравнении с позицией ОКП " Сахар - песок /  - из сахарной свеклы"
+  
+  
+  
+  # внесение данных по косинусному расстоянию в чек 
+  # checkStemFinal<-cbind(checkStem [,c(1:7)],  sim[c(2:length(sim))])
+  
+  # внесение данных по косинусному расстоянию между каждой группой из ОКП и названием в чеке
+  OKP_fit<-cbind(OKP_list [,c(1:11)],  sim[c(2:length(sim))])
+  
+  # сортируем массив с названиями по величине коиснусного  расстояния для каждой позиции и выбранной группы ОКП
+  
+  # subset_cosine_check<-subset(checkStemFinal, checkStemFinal[,8]>0.2)
+  
+  
+  subset_cosine_OKP<-subset(OKP_fit, OKP_fit[,12]>0.2)
+  
+  colnames(subset_cosine_OKP)[12] <- "sim_coef"
+  
+  subset_cosine_OKP<-subset_cosine_OKP[order(subset_cosine_OKP$sim_coef, decreasing= TRUE),]
+  
+  
+  checkStem$OKP_group[i] <- as.character(subset_cosine_OKP[1,7]) # название группы из ОКП
+  checkStem$OKP_group_num[i] <- as.character(subset_cosine_OKP[1,2])
+  
+}   })
+
+classification_result <- checkStem [, c(3,12,13)]
+
+
+
+
+library (dplyr)
+OKP_list %>%
+  filter(str_detect(OKP_list$normilizedForm, 'хлеб'))
+
+
+
+
 # дистрибутивная семантика
 # запускаем python скрипт, который загружает натренированную модель в память
 setwd("C:/Users/msmirnov/")
@@ -361,7 +429,7 @@ model<-gensim$models$KeyedVectors$load_word2vec_format("C:/Users/msmirnov/model.
 model$wv$most_similar("газовый_ADJ") # выводим перечень слов из модели, которые семантически близких к заданному слову
 
 
-model$wv$most_similar("смесь_NOUN")
+model$wv$most_similar("окорок_NOUN")
 
 
 t<- paste("аспирин", "_NOUN", sep="")
@@ -379,90 +447,113 @@ model$wv$most_similar(t)
 # конец основного скрипта
 
 
+# возвращаем конкретный элемент граммемы для конкретного слова
+strsplit(as.character(OKP_list$POS[1] [[1]] [[10]]), ",") [[1]][1]
+
+strsplit(as.character(checkStem$POS[114][[1]][[word_num_in_phrase]]), ",") [[1]][exact_gram]
+
+lapply (checkStem$POS[114][[1]], 
+               function (x) {strsplit(as.character(x), ",") [[1]][1]} ) == 'NOUN' &
+
+lapply (checkStem$POS[114][[1]], 
+        function (x) {strsplit(as.character(x), ",") [[1]][2]} ) == 'inan' &
+
+(lapply (checkStem$POS[114][[1]], 
+        function (x) {strsplit(as.character(x), ",") [[1]][4]} ) == 'nomn' |
+  lapply (checkStem$POS[114][[1]], 
+          function (x) {strsplit(as.character(x), ",") [[1]][5]} ) == 'nomn' )
+
+
+# отфильтровываем слова из названия в чеке, которые удовлетверояют условиям NOUN = cсуществительное,
+# inan - нарицательное, nomn - в именительном падеже
+w<-18 #369
+
+tokens (checkStem[w,3])[[1]][ 
+  
+  
+  lapply (checkStem$POS[w][[1]], 
+          function (x) {strsplit(as.character(x), ",") [[1]][1]} ) == 'NOUN' &
+    
+    lapply (checkStem$POS[w][[1]], 
+            function (x) {strsplit(as.character(x), ",") [[1]][2]} ) == 'inan' &
+    
+    (lapply (checkStem$POS[w][[1]], 
+             function (x) {strsplit(as.character(x), ",") [[1]][4]} ) == 'nomn' |
+       
+       lapply (checkStem$POS[w][[1]], 
+               function (x) {strsplit(as.character(x), ",") [[1]][5]} ) == 'nomn' ) # иногда данные по падежу могут находится в 5-ом элемента массива
+  
+  ] 
 
 
 
+tokens (checkStem[w,3])[[1]][ 
+  
+  
+  lapply (checkStem$POS[w][[1]], 
+          function (x) {strsplit(as.character(x), ",") [[1]][1]} ) == 'NOUN' &
+    
+    lapply (checkStem$POS[w][[1]], 
+            function (x) {strsplit(as.character(x), ",") [[1]][2]} ) == 'inan' &
+    
+    (lapply (checkStem$POS[w][[1]], 
+             function (x) {strsplit(as.character(x), ",") [[1]][4]} ) == 'gent' |
+       
+       lapply (checkStem$POS[w][[1]], 
+               function (x) {strsplit(as.character(x), ",") [[1]][5]} ) == 'gent' )
+  
+  ] 
 
+
+w<-107
+
+ifelse(
+
+is.na (tokens (checkStem[w,3])[[1]][ 
+  
+  
+  lapply (checkStem$POS[w][[1]], 
+          function (x) {strsplit(as.character(x), ",") [[1]][1]} ) == 'NOUN' &
+    
+    lapply (checkStem$POS[w][[1]], 
+            function (x) {strsplit(as.character(x), ",") [[1]][2]} ) == 'inan' &
+    
+    (lapply (checkStem$POS[w][[1]], 
+             function (x) {strsplit(as.character(x), ",") [[1]][4]} ) == 'gent' |
+       
+       lapply (checkStem$POS[w][[1]], 
+               function (x) {strsplit(as.character(x), ",") [[1]][5]} ) == 'gent' )
+  
+  ] [1]), tokens (checkStem[w,3])[[1]][1], 
+
+
+tokens (checkStem[w,3])[[1]][ 
+  
+  
+  lapply (checkStem$POS[w][[1]], 
+          function (x) {strsplit(as.character(x), ",") [[1]][1]} ) == 'NOUN' &
+    
+    lapply (checkStem$POS[w][[1]], 
+            function (x) {strsplit(as.character(x), ",") [[1]][2]} ) == 'inan' &
+    
+    (lapply (checkStem$POS[w][[1]], 
+             function (x) {strsplit(as.character(x), ",") [[1]][4]} ) == 'gent' |
+       
+       lapply (checkStem$POS[w][[1]], 
+               function (x) {strsplit(as.character(x), ",") [[1]][5]} ) == 'gent' )
+  
+  ] [1]
+
+
+)
+
+
+# оставить в названиях только существительные в им. падеже и для них искать коэффициент подобия
+funct_POS('шоколад')
 
 
 
 ##############################
-# обработка для ГИР БО
-all_atr_names<- read.csv('C:/Users/msmirnov/Documents/ГИР БО/all_atr_names.csv', row.names = NULL, header = TRUE, sep = ";")
-
-all_atr_names<- read.csv('C:/Users/msmirnov/Documents/ГИР БО/all_atr_names_TEST.csv', row.names = NULL, header = TRUE, sep = ";")
-
-
-#all_atr_names$stemmedNames<- sapply(all_atr_names [,1],  stem_tokenizer1)
-all_atr_names$normalizedForm<- sapply(as.character(all_atr_names [,1]), function (x) {no_stop_words_function(no_punctuation_function(no_digits_function(normal_form_function_paste(x))))} )
-
-library(RYandexTranslate)
-
-
-
-# сгенерированный ключ API Яндекс переводчик
-api_key<- 'trnsl.1.1.20190904T193649Z.c9d1c19d6a48e61c.cabe507a19291f0040dca170371df858f1a8c4e3'
-translate = function (api_key, text = "", lang = "ru-en") 
-{
-  url = "https://translate.yandex.net/api/v1.5/tr.json/translate?"
-  url = paste(url, "key=", api_key, sep = "")
-  if (text != "") {
-    url = paste(url, "&text=", text, sep = "")
-  }
-  if (lang != "") {
-    url = paste(url, "&lang=", lang, sep = "")
-  }
-  url = gsub(pattern = " ", replacement = "%20", x = url)
-  d = RCurl::getURL(url, ssl.verifyhost = 0L, ssl.verifypeer = 0L)
-  d = jsonlite::fromJSON(d)
-  d$code = NULL
-  d
-}
-
-#translate(api_key,text=enc2utf8('граница'))
-
-
-
-
-
-translate_yandex<-function (x) {translate (api_key,text=enc2utf8(x))}
-
-# перевод на английский через API Яндекс
-system.time({ 
-all_atr_names$translation<- sapply( all_atr_names[,2], function (x) {unlist(lapply(x, translate_yandex))[[2]]})
-
-})
-
-
-# очистка от стоп-слов
-system.time({ 
-  
-all_atr_names$noStopWords<-sapply( all_atr_names[,3], function (x) {paste(as.character(tokens_remove(tokens(x, remove_punct = TRUE), 
-
-                                                    stopwords("english"))), collapse= " ")})
-})   
-
-
-
-abbreviation_function<- function (x) paste(unlist(lapply( as.character(tokens(x)), function (x) { abbreviate(x, 4, strict = TRUE) })), collapse = " ")
-
-
-# функция для сокращения слов в зависимости от длины слова
-abbreviation_function<-  function (x) paste(unlist(lapply( as.character(tokens(x)), function (x) { ifelse(nchar(x)>10, abbreviate(x, 6, strict = FALSE), abbreviate(x, 5, strict = TRUE)) })), collapse = " ")
-
-
-
-
-library (snakecase)
-system.time({ 
-all_atr_names$snakeCase <- sapply(all_atr_names[,4], function (x) {to_snake_case(abbreviation_function(x), abbreviations = NULL, sep_in = "[^[:alnum:]]", parsing_option = 1, transliterations = NULL, numerals = "middle", sep_out = NULL, unique_sep = NULL, empty_fill = NULL, prefix = "", postfix = "")})
-})    
-
-
-
-
-
-write.table(all_atr_names, 'C:/Users/msmirnov/Documents/ГИР БО/all_atr_names_translated.csv',  sep = ";")
 
 
 
