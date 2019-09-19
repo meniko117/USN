@@ -9,7 +9,7 @@ library (reticulate)
 
 # кроме справочника ОКП еще должен быть использован справочник услуг (Общероссифский классификатор услуг населению -ОКУН)
 
-OKP_list<-read.csv("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/ОКП парсинг.csv", na.strings=c(" ", NA), stringsAsFactors=FALSE, header = TRUE, sep = ";")
+OKP_list<-read.csv("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/справочник ОКП (очищенный).csv", na.strings=c(" ", NA), stringsAsFactors=FALSE, header = TRUE, sep = ";")
 
 
 OKP_list$id <- seq(length=nrow(OKP_list))
@@ -261,7 +261,7 @@ system.time({
 # 
 
 # название позиции из конкретного чека сравниваем со всеми группами из ОКП
-myCorpus <- corpus(c(check_item = checkStem$normilizedForm[12] , 
+myCorpus <- corpus(c(check_item = checkStem$normilizedForm[150] , 
                      
                      target1 = OKP_list[,11] )) # target1 - наименования всех позиций из общего массива чеков 
 
@@ -301,7 +301,7 @@ subset_cosine_OKP<-subset_cosine_OKP[order(subset_cosine_OKP$sim_coef, decreasin
 
 # расчет косинусного расстояния между результатми стемиминга
 
-myCorpus <- corpus(c(check_item = checkStem$stemmedNames[114] , 
+myCorpus <- corpus(c(check_item = checkStem$stemmedNames[101] , 
                      
                      target1 = OKP_list$stemmedNames )) # target1 - наименования всех позиций из общего массива чеков 
 
@@ -362,12 +362,12 @@ subset_cosine_OKP_stemmed<-subset_cosine_OKP_stemmed[order(subset_cosine_OKP_ste
 
 system.time({ 
 
-for (i in  1:23) {
+for (i in  1:5000) {
   
   # название позиции из конкретного чека сравниваем со всеми группами из ОКП
-  myCorpus <- corpus(c(check_item = checkStem$normilizedForm[i] , 
+  myCorpus <- corpus(c(check_item = checkStem$cleanName [i] , 
                        
-                       target1 = OKP_list[,11] )) # target1 - наименования всех позиций из общего массива чеков 
+                       target1 = OKP_list[,13] )) # target1 - наименования всех позиций из общего массива чеков 
   
   
   
@@ -404,15 +404,50 @@ for (i in  1:23) {
   
 }   })
 
+classification_result_upd <- checkStem [, c(3,12,13)]
+
 classification_result <- checkStem [, c(3,12,13)]
+
+classification_result <- cbind(classification_result, checkStem [, c(12,13)])
+
+classification_result <- cbind(classification_result [ , c(1:3)], classification_result_upd [, c(2,3)])
+
+write.csv(classification_result, 'C:/Users/msmirnov/Documents/проект УСН/Анализ данных/classification_result.csv')
+
+
+
+
+
+
 
 
 
 
 library (dplyr)
 OKP_list %>%
-  filter(str_detect(OKP_list$normilizedForm, 'хлеб'))
+  filter(str_detect(OKP_list$normilizedForm, 'масл'))
 
+OKP_list %>%
+  filter(str_detect(OKP_list$fulllName, 'кожа'))
+
+OKP_list %>%
+  filter(str_detect(OKP_list[,4], 'носки'))
+
+classification_result %>%
+  filter(str_detect(classification_result[,1], 'картофель'))
+
+as.data.frame(checkStem %>%
+  filter(str_detect(checkStem[,11], 'носки')))[, c(3, 9, 11)]
+
+test1_symb<-as.data.frame(checkStem %>%
+                filter(str_detect(checkStem[,3], 'пюре')))[, c(3, 9, 11)] [1,3]
+
+# убираем из строки слова длиной менее 3-х символов
+paste(as.character(tokens (test1_symb))[ lapply (test1_symb , function (x) {nchar(as.character(tokens(x ))) })[[1]]>3], collapse = " ")
+
+
+
+OKP_list$normilizedForm [grep("батон шоколадный", OKP_list$normilizedForm) ] <-paste("батон", paste(rep("шоколадный", 5), collapse = " "), collapse= " ")
 
 
 
@@ -426,10 +461,10 @@ gensim <- import("gensim")
 
 model<-gensim$models$KeyedVectors$load_word2vec_format("C:/Users/msmirnov/model.bin", binary=TRUE)
 
-model$wv$most_similar("газовый_ADJ") # выводим перечень слов из модели, которые семантически близких к заданному слову
+model$wv$most_similar("шоколадный_ADJ") # выводим перечень слов из модели, которые семантически близких к заданному слову
 
 
-model$wv$most_similar("окорок_NOUN")
+model$wv$most_similar("багет_NOUN")
 
 
 t<- paste("аспирин", "_NOUN", sep="")
