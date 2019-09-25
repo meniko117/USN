@@ -345,12 +345,13 @@ subset_cosine_OKP_stemmed<-subset_cosine_OKP_stemmed[order(subset_cosine_OKP_ste
 
 
 
+# запустить скрипты
+# morph_tuning.R и morph_tuning_OKP.R для придания веса конкретным граммемам (напр. существителным в им. падеже )
 
 
 
-
-
-
+source("C:/Users/msmirnov/Documents/USN/morph_tuning.R") # для позиций в чеке
+source("C:/Users/msmirnov/Documents/USN/morph_tuning_OKP.R") # для позиций в ОКП
 
 
 
@@ -362,7 +363,7 @@ subset_cosine_OKP_stemmed<-subset_cosine_OKP_stemmed[order(subset_cosine_OKP_ste
 
 system.time({ 
 
-for (i in  1:5000) {
+for (i in  211:400) {
   
   # название позиции из конкретного чека сравниваем со всеми группами из ОКП
   myCorpus <- corpus(c(check_item = checkStem$cleanName [i] , 
@@ -404,15 +405,24 @@ for (i in  1:5000) {
   
 }   })
 
-classification_result_upd <- checkStem [, c(3,12,13)]
 
-classification_result <- checkStem [, c(3,12,13)]
 
-classification_result <- cbind(classification_result, checkStem [, c(12,13)])
-
-classification_result <- cbind(classification_result [ , c(1:3)], classification_result_upd [, c(2,3)])
+classification_result <- checkStem [, c(3,14,15)]
 
 write.csv(classification_result, 'C:/Users/msmirnov/Documents/проект УСН/Анализ данных/classification_result.csv')
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -464,7 +474,7 @@ model<-gensim$models$KeyedVectors$load_word2vec_format("C:/Users/msmirnov/model.
 model$wv$most_similar("шоколадный_ADJ") # выводим перечень слов из модели, которые семантически близких к заданному слову
 
 
-model$wv$most_similar("багет_NOUN")
+model$wv$most_similar("вата_NOUN")
 
 
 t<- paste("аспирин", "_NOUN", sep="")

@@ -74,19 +74,19 @@ add_acc <- tokens (checkStem[w,3])[[1]][
 
 # выбираем не NA, первое слово в списке и придаем ему вес (повторяем слово в иходной строке несколько раз)
 # в данном случае для нарицательного существительного в им. падеже, 
-add_nominative <- ifelse(paste(rep (add_nominative[!is.na(add_nominative)], 3), collapse =" ") == "", 
-                         paste(rep (add_nominative[!is.na(add_nominative)], 3), collapse =" "), 
-                         paste(rep (add_nominative[!is.na(add_nominative)][1], 3), collapse =" "))
+add_nominative <- normal_form_function_paste (ifelse(paste(rep (add_nominative[!is.na(add_nominative)], 5), collapse =" ") == "", 
+                                                     paste(rep (add_nominative[!is.na(add_nominative)], 5), collapse =" "), 
+                                                     paste(rep (add_nominative[!is.na(add_nominative)][1], 5), collapse =" ")))
 
 # в данном случае для нарицательного существительного в род. падеже
-add_genitive <-ifelse(paste(rep (add_genitive[!is.na(add_genitive)], 5), collapse =" ") == "", 
-                      paste(rep (add_genitive[!is.na(add_genitive)], 5), collapse =" "), 
-                      paste(rep (add_genitive[!is.na(add_genitive)][1], 5), collapse =" "))
+add_genitive <-normal_form_function_paste (ifelse(paste(rep (add_genitive[!is.na(add_genitive)], 3), collapse =" ") == "", 
+                                                  paste(rep (add_genitive[!is.na(add_genitive)], 3), collapse =" "), 
+                                                  paste(rep (add_genitive[!is.na(add_genitive)][1], 3), collapse =" ")))
 
 # в данном случае для нарицательного существительного в винит. падеже
-add_acc <- ifelse(paste(rep (add_acc[!is.na(add_acc)], 5), collapse =" ") == "", 
-                  paste(rep (add_acc[!is.na(add_acc)], 5), collapse =" "), 
-                  paste(rep (add_acc[!is.na(add_acc)][1], 5), collapse =" "))
+add_acc <- normal_form_function_paste (ifelse(paste(rep (add_acc[!is.na(add_acc)], 3), collapse =" ") == "", 
+                                              paste(rep (add_acc[!is.na(add_acc)], 3), collapse =" "), 
+                                              paste(rep (add_acc[!is.na(add_acc)][1], 3), collapse =" ")))
 
 # "обогатить" исходную строку словами, которым нужно придать больший вес при расчете косинусного расстояния
 #paste( checkStem$normilizedForm [w], add_nominative, add_genitive, add_acc, collapse = '')
@@ -146,26 +146,26 @@ system.time({
 
 
 
-
-
-
-test1_symb<-sapply (classification_result$name [c(243:243)] , function (x) {affix_removel_function(slash_removal_function(point_removal_function(x) ) ) })
-
-
-classification_result$name [243]
-checkStem$POS [150]
-
-
-
-
-save(file = “d:/filename.RData”)
-save.image(“d:/filename.RData”)
-
-save.image(file='OKP_class.RData')
-
-dir()
-
-#terminate my current R session
-quit(save='no')
-
-load('OKP_class.RData')
+# save.image(file='OKP_class_model.RData')
+# 
+# 
+# test1_symb<-sapply (classification_result$name [c(243:243)] , function (x) {affix_removel_function(slash_removal_function(point_removal_function(x) ) ) })
+# 
+# 
+# classification_result$name [243]
+# checkStem$POS [150]
+# 
+# 
+# 
+# 
+# save(file = “d:/filename.RData”)
+# save.image(“d:/filename.RData”)
+# 
+# save.image(file='OKP_class.RData')
+# 
+# dir()
+# 
+# #terminate my current R session
+# quit(save='no')
+# 
+# load('OKP_class.RData')
