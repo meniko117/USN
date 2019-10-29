@@ -35,13 +35,13 @@ df_no_duplicated = df_removeNaN.drop_duplicates(['aggregat_address', 'VAT_NUMBER
 
 
  #  загружаем библиотеки для расчета попарного косинусного расстояния  
-#import nltk
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # инициализируем список адресов, для которого попарно будет рассчитываться косинусное расстояние
 the_corpus = df_no_duplicated['aggregat_address']
-# Vectorise the data
+# функция для векторизации
 vec = TfidfVectorizer()
 
 # матрица количества вхождений слова в конкретный документ (адрес) (tfidf)
