@@ -7,6 +7,7 @@ library (plyr)
 library (quanteda)
 library (reticulate)
 
+system.time({ 
 # кроме справочника ОКП еще должен быть использован справочник услуг (Общероссифский классификатор услуг населению -ОКУН)
 
 OKP_list<-read.csv("C:/Users/msmirnov/Documents/проект УСН/Анализ данных/справочник ОКП (очищенный).csv", na.strings=c(" ", NA), stringsAsFactors=FALSE, header = TRUE, sep = ";")
@@ -363,7 +364,7 @@ source("C:/Users/msmirnov/Documents/USN/morph_tuning_OKP.R") # для позиц
 
 system.time({ 
 
-for (i in  211:400) {
+for (i in  1:100) {
   
   # название позиции из конкретного чека сравниваем со всеми группами из ОКП
   myCorpus <- corpus(c(check_item = checkStem$cleanName [i] , 
@@ -408,6 +409,9 @@ for (i in  211:400) {
 
 
 classification_result <- checkStem [, c(3,14,15)]
+
+
+}) # счетчик времени
 
 write.csv(classification_result, 'C:/Users/msmirnov/Documents/проект УСН/Анализ данных/classification_result.csv')
 

@@ -53,10 +53,13 @@ no_punctuation_function<- function (x) {paste(unlist(tokens(as.character(x), rem
 
 
 # загружаем данные с названиями полей на русском для перевода на английский 
-all_atr_names<- read.csv('C:/Users/msmirnov/Documents/ГИР БО/all_atr_names_TEST.csv', row.names = NULL, header = TRUE, sep = ";")
+all_atr_names<- read.csv('C:/Users/msmirnov/Documents/ГИР БО/all_atr_names_visit_GIRBO.csv', row.names = NULL, header = TRUE, sep = ";")
 
 # создаем колонку со словами, приведенными к нормальной форме
-all_atr_names$normalizedForm<- sapply(as.character(all_atr_names [,1]), function (x) {no_stop_words_function(no_punctuation_function(no_digits_function(normal_form_function_paste(x))))} )
+all_atr_names$normalizedForm<- sapply(as.character(all_atr_names [,1]), 
+                                      function (x) {no_stop_words_function(
+                                        no_punctuation_function(no_digits_function(normal_form_function_paste(x)
+                                                                                   )))} )
 
 ###############################
 
@@ -94,7 +97,7 @@ translate = function (api_key, text = "", lang = "ru-en")
 
 
 
-# переопределяем функция для перевода, чтобы отправлять в кодировке enc2utf8(x)
+# переопределяем функцию для перевода, чтобы отправлять в кодировке enc2utf8(x)
 translate_yandex<-function (x) {translate (api_key,text=enc2utf8(x))}
 
 # перевод на английский через API Яндекс
@@ -103,11 +106,24 @@ translate_yandex<-function (x) {translate (api_key,text=enc2utf8(x))}
  
 # перевод исходных фраз
   all_atr_names$translation<- sapply( as.character(all_atr_names[,1]), function (x) {unlist(lapply(x, translate_yandex))[[2]]})
+  
   all_atr_names$translation<- tolower(all_atr_names$translation)
 
 
 # функция для сокращения слов в зависимости от длины слова
-abbreviation_function<-  function (x) paste(unlist(lapply( as.character(tokens(x)), function (x) { ifelse(nchar(x)>10, abbreviate(x, 6, strict = FALSE), abbreviate(x, 5, strict = TRUE)) })), collapse = " ")
+abbreviation_function<- 
+  function (x) paste(
+    unlist(
+      lapply( as.character(tokens(x)),                                              
+              function (x) { 
+                ifelse(nchar(x)>10, 
+                       abbreviate(x, 6, strict = FALSE), 
+                       abbreviate(x, 5, strict = TRUE))
+                }
+      )
+    ), 
+    collapse = " "
+  )
 
 
 

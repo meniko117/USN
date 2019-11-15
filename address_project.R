@@ -370,7 +370,69 @@ sim <- textstat_simil(myDfmNoStop , method = "cosine", margin = "documents" , up
 
 tt<-as.matrix(sim)
 
-tt_dfm<- as.matrix(dfmTrim)
+tt<- tt [1:10000, 1:10000]
+tt<-as.data.frame(tt)
+rownames(tt)<-test$aggregated_address[1:10000]
+colnames(tt)<-test$aggregated_address[1:10000]
+
+# освобождаем память
+rm(sim)
+gc()
+
+
+
+  
+
+tt_df_total<- as.data.frame(matrix("", ncol = 3, nrow = 1), stringsAsFactors = FALSE) 
+colnames(tt_df_total)<- c("address_cluster",	"address",	"sim_coef")
+
+# навзания в колонках 40 и 76
+system.time({ 
+  
+  for (i in 1:1000) {
+    
+    tt_filter<- subset( tt, tt [ , i]  > 0.8) 
+    
+    tt_df <-as.data.frame(cbind(row.names(tt_filter), tt_filter[,i]))
+    tt_df <-tt_df[order(tt_df[,2], decreasing = TRUE),]
+    
+    tt_df <- cbind(rep(as.character(tt_df[1,1]), nrow(tt_df)), tt_df)
+    
+   
+    colnames(tt_df)<- c("address_cluster",	"address",	"sim_coef")
+    
+    tt_df_total<- rbind(tt_df_total, tt_df)
+    
+ 
+    
+    
+  } 
+  
+})
+
+
+# тест 
+# tt_df_total[ tt_df_total$address_cluster== "WAGE AgruniekRijnvallei Voer B.V. WAGENINGEN Wageningen Rijnhaven 14 6702 DT Wageningen NL",]
+
+tt[1:5, 1:5]
+
+rownames(tt)<-append(test$aggregated_address[1:10000], test$aggregated_address[1:10000])
+
+colnames(tt)<-append(test$aggregated_address[1:10000], test$aggregated_address[1:10000])
+
+tt<-as.data.frame(tt)
+rownames(tt)<-append(test$aggregated_address[1:10000], test$aggregated_address[1:10000])
+
+tt_filter<-subset( tt, tt [ ,grep( "WAGE AgruniekRijnvallei Voer B.V. WAGENINGEN Wageningen Rijnhaven 14 6702 DT Wageningen NL", colnames(tt))[1]] > 0.8)[ ,40]
+
+tt_filter[ ,40]
+
+
+
+as.data.frame(tt_filter)
+
+
+TRUEtt_dfm<- as.matrix(dfmTrim)
 
 # меняет название рядов в матрице dfm
 rownames(tt_dfm)<-append(test$aggregated_address[1:10000], test$aggregated_address[1:10000])

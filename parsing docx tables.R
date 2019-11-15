@@ -1,6 +1,10 @@
 library(docxtractr)
 
 real_world <- read_docx("C:/Users/msmirnov/Documents/проект УСН/Документация/УОК_30.04.2019_проект_протокола информационного обмена_ОФД-ФНС_ФФД 1.05.docx")
+
+#real_world <- read_docx("C:/Users/msmirnov/Documents/проект УСН/Документация/Проект_протокола информационного обмена_ОФД-ФНС_ФФД 1.05_1.3.1 (11 ноября 2019).docx")
+
+
 number_of_tables<-docx_tbl_count(real_world)
 
 tbls <- docx_extract_all_tbls(real_world)
@@ -17,6 +21,49 @@ for (i in  2:number_of_tables) {
 }
 
 all_reqs<-subset( protocol_items$Имя.реквизита.в.формате.JSON, !is.na(protocol_items$Имя.реквизита.в.формате.JSON))
+
+# описание всех реквизитов
+all_reqs_description<-subset(protocol_items[, c(26:35)], !is.na(protocol_items$Имя.реквизита.в.формате.JSON))
+all_reqs_description<-subset( all_reqs_description, !duplicated(all_reqs_description$Имя.реквизита.в.формате.JSON ))
+
+
+# описание всех реквизитов в новой версии Протокола
+all_reqs_description_new <- subset( protocol_items[, c(26:35)], !is.na(protocol_items$Имя.реквизита.в.формате.JSON))
+all_reqs_description_new<-subset( all_reqs_description_new, !duplicated(all_reqs_description_new))
+
+reqs_comparison <- merge(all_reqs_description, all_reqs_description_new,  by = "Имя.реквизита.в.формате.JSON", all= TRUE )
+reqs_comparison <- reqs_comparison [!duplicated(reqs_comparison$Имя.реквизита.в.формате.JSON), ]
+
+compare_fun<- function (x,y) {identical(x,y)}
+reqs_comparison$Описание.реквизита_comp <- mapply(compare_fun, reqs_comparison$Описание.реквизита.x, reqs_comparison$Описание.реквизита.y)
+reqs_comparison$Тип.данных.JSON_comp <- mapply(compare_fun, reqs_comparison$Тип.данных.JSON.x, reqs_comparison$Тип.данных.JSON.y)
+reqs_comparison$Кардинальность_comp <- mapply(compare_fun, reqs_comparison$Кардинальность, reqs_comparison$КардинальностьОбязательность)
+reqs_comparison$Тег_comp <- mapply(compare_fun, reqs_comparison$Тег.x, reqs_comparison$Тег.y)
+reqs_comparison$Ограничения_comp <- mapply(compare_fun, reqs_comparison$Ограничения.x, reqs_comparison$Ограничения.y)
+reqs_comparison$Обязательно.вверсии.1.05_comp <- mapply(compare_fun, reqs_comparison$Обязательно.вверсии.1.05.x, reqs_comparison$Обязательно.вверсии.1.05.y)
+reqs_comparison$Примечания_comp <- mapply(compare_fun, reqs_comparison$Примечания.x, reqs_comparison$Примечания.y)
+
+reqs_comparison [reqs_comparison$Описание.реквизита_comp== FALSE, ][1]
+reqs_comparison [reqs_comparison$Тип.данных.JSON_comp== FALSE, ][1]
+
+
+# вводим колонку  c флагом, с указанием имеются ли изменения 
+reqs_comparison$changes <- apply(reqs_comparison[, c(20:26)], 1, function(x) {any(x== FALSE)})
+reqs_comparison_subset <- reqs_comparison [reqs_comparison$changes == TRUE, ]
+
+write.table(reqs_comparison_subset, "C:/Users/msmirnov/Documents/проект УСН/Документация/сравнение Протоколов июль-нояб.csv", sep =";")
+
+df[!(duplicated(df[c("c","d")]) | duplicated(df[c("c","d")], fromLast = TRUE)), ]
+
+
+
+
+
+
+
+
+
+
 
 # перечень всех упоминаемых реквизитов чека из Протокола
 unique(all_reqs)

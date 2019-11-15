@@ -11,8 +11,6 @@ system.time({
     
     
     
-    
-    
     add_nominative <- tokens (as.character(OKP_list[w,7]))[[1]][ 
       
       
