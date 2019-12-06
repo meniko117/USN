@@ -145,7 +145,7 @@ system.time({
 
 
 
-
+# сохранить результаты (R окружения - переменные)
 # save.image(file='OKP_class_model.RData')
 # 
 # 
