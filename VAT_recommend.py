@@ -23,7 +23,10 @@ df_ltdctr_2 = pd.read_csv('ltdctr second_.csv', sep=',',encoding='ansi', names=c
 
 df = pd.concat([df_cefctr, df_ltdctr_1, df_ltdctr_2])
 
-df['aggregat_address'] = df['COUNTERPARTY']+" "+ df['RELNAME'] + " " + df['LOCATION']+ " "+ df ['LOCNAME'] + " "+ df['ADDRESS_LINE']+ " " +df['ZIP_CD']+ " " +df['PLACE']  + " " + df['COUNTRYCD']
+# конкатенируем колонки, инофрмация из которых входит в адрес
+#df['aggregat_address'] = df['COUNTERPARTY']+" "+ df['RELNAME'] + " " + df['LOCATION']+ " "+ df ['LOCNAME'] + " "+ df['ADDRESS_LINE']+ " " +df['ZIP_CD']+ " " +df['PLACE']  + " " + df['COUNTRYCD']
+df['aggregat_address'] = df[['COUNTERPARTY', 'RELNAME', 'LOCATION', 'LOCNAME', 'ADDRESS_LINE', 'ZIP_CD', 'PLACE', 'COUNTRYCD' ]].apply(lambda x: ' '.join(x.dropna().values.tolist()), axis=1)
+
 
 # создали новый data frame без строк, содержащих NaN
 df_removeNaN= df.dropna()
@@ -35,13 +38,13 @@ df_no_duplicated = df_removeNaN.drop_duplicates(['aggregat_address', 'VAT_NUMBER
 
 
  #  загружаем библиотеки для расчета попарного косинусного расстояния  
-#import nltk
+
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # инициализируем список адресов, для которого попарно будет рассчитываться косинусное расстояние
 the_corpus = df_no_duplicated['aggregat_address']
-# Vectorise the data
+# функция для векторизации
 vec = TfidfVectorizer()
 
 # матрица количества вхождений слова в конкретный документ (адрес) (tfidf)
