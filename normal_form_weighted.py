@@ -123,6 +123,7 @@ def weighted_text_string (normal_form_list, multiplicator_list):
     return ' '.join(result)
 
 
+
 df_OKP['clean_form'] = df_OKP['Item'].apply(remove_symbols)
 df_OKP['normal_form'] = df_OKP['clean_form'].apply(normal_fun)
 df_OKP['normal_form_list'] = df_OKP['normal_form'].apply(normal_fun_list) 
