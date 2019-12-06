@@ -110,6 +110,7 @@ def case_fun (x):
 #    return [5 if a_val == 'NOUN' and b_val == 'nomn' else 3 if a_val == 'NOUN' and b_val == 'accs'  else 1 for a_val, b_val in zip(a, b)]
 
 
+
 def word_multiplicator(a, b, c):
     result = [3 if a_val == 'NOUN' and (b_val == 'nomn' or b_val == 'accs') and c_val == 'inan'  
               else 2 if a_val == 'NOUN' and b_val == 'accs' and c_val == 'inan' 
@@ -121,7 +122,6 @@ def word_multiplicator(a, b, c):
 def weighted_text_string (normal_form_list, multiplicator_list):
     result = sum([[a]*b for a,b in zip(normal_form_list, multiplicator_list)], [])
     return ' '.join(result)
-
 
 
 df_OKP['clean_form'] = df_OKP['Item'].apply(remove_symbols)
