@@ -48,37 +48,6 @@ colnames(tt)<-test$aggregated_address[1:nrow(test)]
 
 
 
-
-
-
-
-# tt_df_total<- as.data.frame(matrix("", ncol = 3, nrow = 1), stringsAsFactors = FALSE) 
-# colnames(tt_df_total)<- c("address_cluster",	"address",	"sim_coef")
-
-# неоптимальное составление результирующей таблицы
-# system.time({ 
-#   
-#   for (i in 1:nrow(tt)) {
-#     
-#     tt_filter<- subset( tt, tt [ , i]  > 0.8) 
-#     
-#     tt_df <-as.data.frame(cbind(row.names(tt_filter), tt_filter[,i]))
-#     tt_df <-tt_df[order(tt_df[,2], decreasing = TRUE),]
-#     
-#     tt_df <- cbind(rep(as.character(tt_df[1,1]), nrow(tt_df)), tt_df)
-#     
-#     
-#     colnames(tt_df)<- c("address_cluster",	"address",	"sim_coef")
-#     
-#     tt_df_total<- rbind(tt_df_total, tt_df)
-#     
-#     
-#     
-#     
-#   } 
-#   
-# })
-
 # подставляем колонку с названиями к имеющейся матрице значений косинусных расстояний
 
 
@@ -95,63 +64,6 @@ tt_df_total_optim<- tt_row_names %>%
 
 colnames(tt_df_total_optim)[1:2]<-c( "address", "address_cluster" )
 
-# 
-# 
-# обработчик ошибок, в случае, если rbind не будте работать (при попытке соединить таблицы, с количеством строк 0)
-# 
-# 
-# tt_df_total<- as.data.frame(matrix("", ncol = 3, nrow = 1), stringsAsFactors = FALSE) 
-# colnames(tt_df_total)<- c("address_cluster",	"address",	"sim_coef")
-# 
-# system.time({ 
-#   
-#   for (i in 1:10000) {
-#     
-#     tt_filter<- subset( tt , tt [ , i]  > 0.8) 
-#     
-#     tt_df <-as.data.frame(cbind(row.names(tt_filter), tt_filter[,i]))
-#     
-#     
-#     
-#     #обработка ошибки, если результат соритровки возвращает пустой массив
-#     
-    # possibleError <- tryCatch(
-    # 
-    #   tt_df <- cbind(rep(tt_df[1,1], nrow(tt_df)), (tt_df[order(tt_df[,2], decreasing = TRUE),])),
-    # 
-    #   error=function(e) e
-    # 
-    # 
-    # )
-    # 
-    # 
-    # 
-    # if(inherits(possibleError, "error")) next
-    # 
-    # colnames(tt_df)<- c("address_cluster",	"address",	"sim_coef")
-    # 
-    # tt_df_total<- rbind(tt_df_total, tt_df)
-
-#     ;
-#     
-#     
-#     
-#   } 
-#   
-# })
-# 
-# 
-# 
-# 
-# 
-# 
-# 
-
-
-
-
-
-
 
 
 
@@ -159,10 +71,6 @@ all_address  <- read.csv("C:/Users/msmirnov/Documents/Проект_адреса/
 
 # конкатенируем все колонки, которые содержат информацию, относящуюся к адресу
 all_address$aggregated_address<- apply( all_address[, c(5,6, 8, 9, c(11:14))], 1, paste,  collapse = " ")
-
-# вводим переменную all_address - все адреса, но не загружаем ее из файла, а присваиваем уже имеющийся в памяи массив
-# TODO  требует улучшения названия и исаравления кода для оптимизации
-
 
 
 
@@ -192,36 +100,25 @@ fin_summary<- address_VAT_result %>%
   group_by(address_cluster) %>% 
   summarize(n_unique = length(unique(VAT_NUMBER)))
 
-# получаем группы адресов, внутри которых более 2 уник vAT номеров
+# получаем группы адресов, внутри которых более 2 уник VAT номеров
 fin_summary_sorted<-subset(fin_summary, fin_summary$n_unique > 1)
 
 # сортируем общий массив с адресами, остваляя только те групппы, где адреса схожи, но номера VAT внутри группы разные
-vAT_problem<-address_VAT_result[address_VAT_result$address_cluster %in% fin_summary_sorted$address_cluster, ]
+VAT_problem<-address_VAT_result[address_VAT_result$address_cluster %in% fin_summary_sorted$address_cluster, ]
 
-# vAT_problem<- vAT_problem [order(vAT_problem$address_cluster),]
-# 
-# 
-# vAT_problem_del_duplicates<-vAT_problem[!duplicated(vAT_problem),]
-# 
-# 
-# vAT_problem_del_duplicates <-vAT_problem_del_duplicates[ vAT_problem_del_duplicates$sim_coef !=1, ]
 
 # сортируем массив в порядке убывания косин. расстояния
-vAT_problem <- vAT_problem [order(vAT_problem$address_cluster, vAT_problem$sim_coef, decreasing = TRUE), ]
+VAT_problem <- VAT_problem [order(VAT_problem$address_cluster, VAT_problem$sim_coef, decreasing = TRUE), ]
 
 })
 
 
-vAT_problem <- vAT_problem [ ,c(2,1, 3:5)]
+VAT_problem <- VAT_problem [ ,c(2,1, 3:5)]
 
-write.table(vAT_problem, "C:/Users/msmirnov/Documents/Проект_адреса/vAT_problem_optimized_fin.csv", sep = ";",row.names = FALSE)
-
-
+write.table(VAT_problem, "C:/Users/msmirnov/Documents/Проект_адреса/vAT_problem_optimized_fin.csv", sep = ";",row.names = FALSE)
 
 
 
 
-# keep only words occurring >= 5 times and in at least 0.95 of the documents
-# dfmTrim <- dfm_trim(myDfmNoStop, min_termfreq = 5, min_docfreq = 0.95)
-# sim <- textstat_simil(dfmTrim , method = "cosine", mmargin="documents", upper = TRUE)  #margin = "documents"
+
 
